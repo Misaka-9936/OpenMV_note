@@ -1,16 +1,15 @@
-# Untitled - By: Du - 周日 7月 11 2021
-
 # 最基本的四行代码：
 import sensor, image, time, pyb             # 引入最基本的库
-import math
+import math                                 # 测距
 from pyb import UART                        # 开启串口通信
-from pyb import LED                         # 开启LED，在脱机状态下可以看到程序进行到了哪一步
+from pyb import LED                         # 开启LED，在脱机状态下可以看到程序进行到了哪一步（提示）
 
 red_led = LED(1)
 green_led = LED(2)
 blue_led = LED(3)
 
 p = pyb.Pin("P0", pyb.Pin.IN)               # 给OpenMV一个高、低电平来判断是否可以识别色块
+                                            # 比如OpenMV识别到A杆以后，就启动OpenMV开始识别
 
 global left, middle, right, VAL             # 声明数个全局变量
 global color
@@ -21,7 +20,7 @@ left = 0            # 赋初值
 middle = 0
 right = 0
 
-flag_color = 0      ##########################flag_color选择值##########################
+flag_color = 0      ########################## flag_color 选择值 ##########################
                                                 # 到时候在现场调试阈值
 red_threshold = (58, 40, 77, -46, 72, 28)       # 红色颜色阈值
 green_threshold = (39, 93, -71, -28, -22, 67)   # 绿色颜色阈值
@@ -33,6 +32,7 @@ green_color_code = 2        # code = 2^1 = 2 = 0010H
 blue_color_code = 4         # code = 2^2 = 4 = 0100H
 black_color_code = 8        # code = 2^3 = 8 = 1000H
                             # 红色、绿色、蓝色和没有识别到的，对应着2的幂次
+                            # 最稳定的——blob.code()函数
 
 # 摄像头sensor最基本的初始化
 sensor.reset()
@@ -58,6 +58,7 @@ def Light():                # 但效果不好，不如直接外界补光
     green_led.on()
     blue_led.on()
 
+################################################# while flag_color == 0 #################################################
 
 # 下面就是主程序了：
 while(flag_color == 0):     # flag_color的默认值为0
@@ -66,12 +67,14 @@ while(flag_color == 0):     # flag_color的默认值为0
     print(VAL)              # 输出这个值
 
                             # 如果主控从P0口给了OpenMV的P0口一个低电平的话，标志位置1
-    if VAL == 0:            # 检测到高电平后（低？？？）
+    if VAL == 0:            # 检测到低电平后
         flag_color = 1      # 颜色检测标志位后：置1
 
     if flag_color == 1:     # 若标志位为1，则关闭蓝色LED，跳出循环
         blue_led.off()
         break
+
+################################################# while flag_color == 1 #################################################
 
 while(flag_color == 1):     # flag_color为1
     colok.tick()            # 开始计频
@@ -80,6 +83,7 @@ while(flag_color == 1):     # flag_color为1
     img.draw_rectangle((105,55,50,73), color=(0x00,0x00,0x00))
     img.draw_rectangle((205,55,50,73), color=(0x00,0x00,0x00))
     # 三个识别区的位置（根据储物位置和摄像头位置调整）
+    # 是我们能更简洁明了地找到有没有查找到色块
 
     # 下面就是算法了：
     # 这里调用了色块库blob，并且将red、green、blue三种颜色的blob合并
@@ -91,10 +95,10 @@ while(flag_color == 1):     # flag_color为1
     middle = 0
     right = 0
 
-    #####################################判断左边物块的颜色#########################################
+    ##################################### 判断左边物块的颜色 #########################################
     if blob_left:
         for blob in blob_left:              
-            x = blob[0]
+            x = blob[0]             # 赋值官方给的色块对象
             y = blob[1]
             width = blob[2]
             height = blob[3]
@@ -117,7 +121,7 @@ while(flag_color == 1):     # flag_color为1
             # print("%d" % left)
             # uart.write("%d" % left)     # 串口通信
 
-    ######################################中间颜色检测#############################################
+    ###################################### 中间颜色检测 #############################################
     if blob_middle:
         for blob in blob_middle:
             x = blob[0]
@@ -138,14 +142,14 @@ while(flag_color == 1):     # flag_color为1
                 img.draw_string(x, y-10, "blue", color=(0x00,0x00,0xFF))
                 left = 3
             color = color_code
-            # length = 6943 * math.sin(0.0001625*height+3.089)
+            # length = 6943 * math.sin(0.0001625*height+3.089)          # Matmab函数，拟合测距
             img.draw_rectangle([x, y, width, height])
             img.draw_cross(center_x, center_y)
             # print(length)
             # print("%d" % middle)
             # uart.write("%d" % middle)     # 串口通信
 
-    #####################################右侧物块颜色检测###########################################
+    ##################################### 右侧物块颜色检测 ###########################################
     if blob_right:
         for blob in blob_right:
             x = blob[0]
@@ -171,7 +175,7 @@ while(flag_color == 1):     # flag_color为1
             # print("%d" % right)
             # uart.write("%d" % right)     # 串口通信
             # time.sleep(10)
-    ####################################将检测到的颜色发送###########################################
+    #################################### 将检测到的颜色发送 ###########################################
 
     ######################################颜色检测与串口#############################################   
             # elif color_code == 4:
@@ -183,6 +187,7 @@ while(flag_color == 1):     # flag_color为1
     # print("%d" % middle)
     # print("%d" % right)
         if left != 0 and right != 0 and middle != 0 and left != right and right != middle:      # 预防出现偏差的情况
+                                                                                                # 防止左、中、右没有探测到的时候乱报/相同
             if left == 1 and middle == 2 and right == 3:            # 对应着6种情况，6种符号
                 print("%d%d%d" % (left, middle, right))
                 # uart.write("%d%d%d" % (left, middle, right))      # 数字，改串口直接改这里
@@ -207,7 +212,7 @@ while(flag_color == 1):     # flag_color为1
                 print("%d%d%d" % (left, middle, right))
                 # uart.write("%d%d%d" % (left, middle, right))
                 uart.write('n')
-        if uart.any():                  # 判断是否跳出当前循环（flag_color=1是循环）
+        if uart.any():                  # 判断是否跳出当前循环：while(flag_color=1）的循环
             tmp_data = uart.readline()
             red_led.on()
             print(tmp_data)
@@ -216,16 +221,18 @@ while(flag_color == 1):     # flag_color为1
                 red_led.off()
                 break                   # 已被接受，此函数结束
 
-######################################二维码扫描与串口#############################################
+################################################# while flag_color == 2 #################################################
+
+###################################### 二维码扫描与串口 #############################################
 while(flag_color == 2):
     clock.tick()
     # Light()                           # 要外界补光，不要用自带的灯
     img0 = sensor.snapshot()            # 新的图片不能和前面img相同
-    img0.lens_corr(1.8)                 # 要用新版的OpenMV，旧版没有这个函数
+    img0.lens_corr(1.8)                 # 要用新版的OpenMV，旧版没有这个函数（修正畸变）
     for QR in img0.find_qrcodes():      # 扫码不清楚的话，可以用扫码枪，不过那都是后话了
         code = QR.payload()             
         img0.draw_rectangle(QR.rect(), color=(255,48,48))
-        if code == '123':
+        if code == '123':               # 这是他小车特殊情况识别二维码的情况判断了
             uart.write('z')             # 串口终端显示
             print('123')
             red_led.on()
@@ -268,7 +275,9 @@ while(flag_color == 2):
             flag_color = 3
             break
 
-#########################################完成任务之后##############################################
+################################################# while flag_color == 3 #################################################
+
+######################################### 完成任务之后 ##############################################
 while(flag_color == 3):                 # 此时标志位为3，代表上面的所有程序已经执行完毕
     green_led.on()                      # 亮起绿光提示
 
