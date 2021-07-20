@@ -50,7 +50,10 @@ clock = time.clock()                # Create a clock object to track the FPS.
 # 帧缓冲区中的RAM比MicroPython堆中的RAM多得多。
 # 但是，在执行此操作后，您的某些算法的RAM会少得多......
 # 所以，请注意现在摆脱RAM问题要容易得多。
+
+# 为帧缓冲区堆栈中的图像储存分配另一个帧缓冲区，并且返回一个width、height、pixformat图像对象
 extra_fb = sensor.alloc_extra_fb(sensor.width(), sensor.height(), sensor.RGB565)
+# 对替换的基础图像起作用
 extra_fb.replace(sensor.snapshot())
 
 while(True):
