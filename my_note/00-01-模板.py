@@ -6,7 +6,6 @@ import sensor, image, time
 import pyb
 import math
 from pyb import LED
-from pyb import UART
 
 red_led = LED(1)
 green_led = LED(2)
@@ -16,8 +15,6 @@ def Light():
     red_led.on()
     green_led.on()
     blue_led.on()
-
-uart = UART(3, 115200)
 
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
@@ -30,7 +27,7 @@ clock = time.clock()
 
 while(True):
     clock.tick()
-    Light()
+    # Light()
     img = sensor.snapshot()
 
 
