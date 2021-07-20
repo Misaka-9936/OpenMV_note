@@ -16,7 +16,8 @@ def Light():
     green_led.on()
     blue_led.on()
 
-red_threshold = (45, 61, 14, 61, -6, 40)
+red_threshold_1 = (45, 61, 14, 61, -6, 40)
+red_threshold_2 = (38, 50, 41, 61, 18, 44)
 yellow_threshold = (73, 95, -20, 10, 20, 66)
 
 red_color_code = 1          # code = 2^0 = 1 = 0001H
@@ -38,7 +39,7 @@ while(True):
     Light()
     img = sensor.snapshot()
 
-    blobs = img.find_blobs([red_threshold,yellow_threshold], area_threshold=200, merge=True)
+    blobs = img.find_blobs([red_threshold_1,red_threshold_2,yellow_threshold], area_threshold=200, merge=True)
     if blobs:
         for blob in blobs:
             x = blob[0]             # 赋值官方给的色块对象
