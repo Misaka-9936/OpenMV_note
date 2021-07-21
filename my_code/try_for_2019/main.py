@@ -72,7 +72,6 @@ sensor.set_windowing(640, 100)
 sensor.skip_frames(time = 500)
 sensor.set_auto_gain(False)
 sensor.set_auto_whitebal(False)
-sensor.set_windowing(640, 100)
 
 while(code_step == 1):
     clock.tick()                # 开始计频
