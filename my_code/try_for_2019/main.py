@@ -19,10 +19,12 @@ global VAL
 global code_step
 global color_code
 global K
+global is_debug
 
 VAL = 1
 code_step = 0
 K = 1410
+is_debug = False
 
 yellow_threshold = (97, 98, -16, -13, 70, 94)
 # test_yellow_threshold = (76, 95, -22, 5, 0, 42)
@@ -52,7 +54,13 @@ while(code_step == 0):
                                 # 获取到引脚低电平后，跳出等待循环
     if VAL == 0:                # 注意：VAL悬空时是1
         code_step = 1
+    
     print("code_step = ", code_step)
+
+    # debug程序
+    if is_debug:
+        print('检测到低电平，模块启动！')
+        continue
 
     if code_step == 1:
         red_led.off()
@@ -60,9 +68,9 @@ while(code_step == 0):
         break
 
     # 测试用
-    code_step = 1
-    red_led.off()
-    break
+    # code_step = 1
+    # red_led.off()
+    # break
 
 ########################################## code_step == 1，识别竖杆、测距 ##########################################
 sensor.reset()
@@ -178,31 +186,6 @@ while(code_step == 3):
 while(code_step == 4):
     clock.tick()
     green_led.on()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
