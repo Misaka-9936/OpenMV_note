@@ -29,6 +29,7 @@ while(True):
     clock.tick()
     # Light()
     img = sensor.snapshot()
+    print(clock.fps())
 
 
 
